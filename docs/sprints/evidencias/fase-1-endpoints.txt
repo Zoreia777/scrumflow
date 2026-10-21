@@ -1,0 +1,244 @@
+##### Alembic (banco de desenvolvimento) 2026-10-21T14:43:37Z
+INFO  [alembic.runtime.migration] Running downgrade 0002 -> 0001, cria a tabela projects (US-01)
+INFO  [alembic.runtime.migration] Running upgrade 0001 -> 0002, cria a tabela projects (US-01)
+0002 (head)
+No new upgrade operations detected.
+
+##### Endpoints (API real em http://127.0.0.1:8000, PostgreSQL 16.15 local)
+
+### 1. POST criar projeto (AC01)
+$ POST /api/v1/projects {"name":"Portal da Coordenadoria","description":"Projeto de exemplo"}
+HTTP 201
+{
+    "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+    "name": "Portal da Coordenadoria",
+    "description": "Projeto de exemplo",
+    "created_at": "2026-10-21T11:45:07.677779-03:00",
+    "updated_at": "2026-10-21T11:45:07.677779-03:00"
+}
+
+### 2. POST com espaços nas pontas e sem descrição
+$ POST /api/v1/projects {"name":"  Segundo projeto  "}
+HTTP 201
+{
+    "id": "db46218f-d28c-4e01-84d7-a87a4467b7e0",
+    "name": "Segundo projeto",
+    "description": null,
+    "created_at": "2026-10-21T11:45:07.757822-03:00",
+    "updated_at": "2026-10-21T11:45:07.757822-03:00"
+}
+
+### 3. GET listar (mais recentes primeiro)
+$ GET /api/v1/projects 
+HTTP 200
+[
+    {
+        "id": "db46218f-d28c-4e01-84d7-a87a4467b7e0",
+        "name": "Segundo projeto",
+        "description": null,
+        "created_at": "2026-10-21T11:45:07.757822-03:00",
+        "updated_at": "2026-10-21T11:45:07.757822-03:00"
+    },
+    {
+        "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+        "name": "Portal da Coordenadoria",
+        "description": "Projeto de exemplo",
+        "created_at": "2026-10-21T11:45:07.677779-03:00",
+        "updated_at": "2026-10-21T11:45:07.677779-03:00"
+    }
+]
+
+### 4. GET detalhe (AC05)
+$ GET /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 
+HTTP 200
+{
+    "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+    "name": "Portal da Coordenadoria",
+    "description": "Projeto de exemplo",
+    "created_at": "2026-10-21T11:45:07.677779-03:00",
+    "updated_at": "2026-10-21T11:45:07.677779-03:00"
+}
+
+### 5. PATCH editar nome e descrição (AC04)
+$ PATCH /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 {"name":"Portal Digital","description":"Descrição atualizada"}
+HTTP 200
+{
+    "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+    "name": "Portal Digital",
+    "description": "Descrição atualizada",
+    "created_at": "2026-10-21T11:45:07.677779-03:00",
+    "updated_at": "2026-10-21T11:45:07.938679-03:00"
+}
+
+### 6. GET após editar (persistido)
+$ GET /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 
+HTTP 200
+{
+    "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+    "name": "Portal Digital",
+    "description": "Descrição atualizada",
+    "created_at": "2026-10-21T11:45:07.677779-03:00",
+    "updated_at": "2026-10-21T11:45:07.938679-03:00"
+}
+
+### 7. PATCH apagar descrição (null)
+$ PATCH /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 {"description":null}
+HTTP 200
+{
+    "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+    "name": "Portal Digital",
+    "description": null,
+    "created_at": "2026-10-21T11:45:07.677779-03:00",
+    "updated_at": "2026-10-21T11:45:08.055337-03:00"
+}
+
+##### Erros 422 / 404 (AC02, AC03, AC07)
+
+### 8. POST nome vazio
+$ POST /api/v1/projects {"name":"   "}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "name",
+                "code": "blank",
+                "message": "O nome não pode ficar vazio."
+            }
+        ]
+    }
+}
+
+### 9. POST nome com 101 caracteres
+$ POST /api/v1/projects {"name":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "name",
+                "code": "too_long",
+                "message": "O nome deve ter no máximo 100 caracteres."
+            }
+        ]
+    }
+}
+
+### 10. POST descrição com 1001 caracteres
+$ POST /api/v1/projects {"name":"ok","description":"ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "description",
+                "code": "too_long",
+                "message": "A descrição deve ter no máximo 1000 caracteres."
+            }
+        ]
+    }
+}
+
+### 11. PATCH corpo vazio
+$ PATCH /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 {}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": null,
+                "code": "empty_body",
+                "message": "Informe ao menos um campo para atualizar (nome ou descrição)."
+            }
+        ]
+    }
+}
+
+### 12. GET projeto inexistente
+$ GET /api/v1/projects/00000000-0000-4000-8000-000000000000 
+HTTP 404
+{
+    "error": {
+        "code": "not_found",
+        "message": "Recurso não encontrado."
+    }
+}
+
+### 13. GET identificador malformado
+$ GET /api/v1/projects/abc 
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "project_id",
+                "code": "uuid_parsing",
+                "message": "O identificador informado é inválido."
+            }
+        ]
+    }
+}
+
+### 14. PATCH projeto inexistente
+$ PATCH /api/v1/projects/00000000-0000-4000-8000-000000000000 {"name":"x"}
+HTTP 404
+{
+    "error": {
+        "code": "not_found",
+        "message": "Recurso não encontrado."
+    }
+}
+
+##### Registros no PostgreSQL (consulta direta)
+                  id                  |      name       | description |          created_at           |          updated_at           
+--------------------------------------+-----------------+-------------+-------------------------------+-------------------------------
+ db46218f-d28c-4e01-84d7-a87a4467b7e0 | Segundo projeto |             | 2026-10-21 11:45:07.757822-03 | 2026-10-21 11:45:07.757822-03
+ de07198e-cea2-4d62-bc88-2a6aa2576b29 | Portal Digital  |             | 2026-10-21 11:45:07.677779-03 | 2026-10-21 11:45:08.055337-03
+(2 rows)
+
+##### Persistência após reiniciar o servidor
+
+### 15. GET listar após reinício
+$ GET /api/v1/projects 
+HTTP 200
+[
+    {
+        "id": "db46218f-d28c-4e01-84d7-a87a4467b7e0",
+        "name": "Segundo projeto",
+        "description": null,
+        "created_at": "2026-10-21T11:45:07.757822-03:00",
+        "updated_at": "2026-10-21T11:45:07.757822-03:00"
+    },
+    {
+        "id": "de07198e-cea2-4d62-bc88-2a6aa2576b29",
+        "name": "Portal Digital",
+        "description": null,
+        "created_at": "2026-10-21T11:45:07.677779-03:00",
+        "updated_at": "2026-10-21T11:45:08.055337-03:00"
+    }
+]
+
+##### Falha real de banco (PostgreSQL parado)
+$ GET /api/v1/projects 
+{"error":{"code":"internal_error","message":"Erro interno do servidor."}}
+HTTP 500
+$ GET /api/v1/projects/de07198e-cea2-4d62-bc88-2a6aa2576b29 
+{"error":{"code":"internal_error","message":"Erro interno do servidor."}}
+HTTP 500
+$ POST /api/v1/projects {"name":"x"}
+{"error":{"code":"internal_error","message":"Erro interno do servidor."}}
+HTTP 500
+--- log do servidor (só no servidor, nunca na resposta):
+psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 5433 failed: Connection refused
+sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at "127.0.0.1", port 5433 failed: Connection refused
+psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 5433 failed: Connection refused

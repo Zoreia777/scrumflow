@@ -1,11 +1,56 @@
-# Segredos e ambientes locais
+# Segredos e configuração local
 .env
 .env.*
 !.env.example
+
+# Python
 __pycache__/
+*.py[cod]
 .venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
 node_modules/
 dist/
 coverage/
-.pytest_cache/
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Editor e sistema
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# Reforços adicionados na consolidação da Sprint 01
+# Bancos locais, dumps, logs e arquivos de processo
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.log
+*.pid
+
+# Cobertura e caches de ferramentas
+.coverage
+.coverage.*
+htmlcov/
+.vite/
+.eslintcache
+
+# Pacotes de entrega e chaves
+*.zip
+*.pem
+*.key
+
