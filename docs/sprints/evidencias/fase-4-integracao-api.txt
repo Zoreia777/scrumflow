@@ -1,0 +1,43 @@
+##### Integração frontend (navegador real, Chromium 141) <-> API real <-> PostgreSQL 16.15 — 2026-10-21T15:49:18.372Z
+Requisições feitas PELA INTERFACE e respostas recebidas da API (capturadas no navegador).
+
+=== 1. Abrir projeto A (backlog vazio)
+
+[1] GET /api/v1/projects/8bf55797-75a7-42de-9f8d-aabcde023456
+    HTTP 200  ->  {"id":"8bf55797-75a7-42de-9f8d-aabcde023456","name":"Projeto A (integração)","description":null,"created_at":"2026-10-21T12:49:18.396546-03:00","updated_at":"2026-10-21T12:49:18.396546-03:00"}
+
+[2] GET /api/v1/projects/8bf55797-75a7-42de-9f8d-aabcde023456/stories
+    HTTP 200  ->  []
+
+=== 2. Cadastrar história pela tela (título com espaços, 2 critérios, prioridade Média)
+
+[3] POST /api/v1/projects/8bf55797-75a7-42de-9f8d-aabcde023456/stories
+    corpo enviado: {"title":"Registrar pagamento","priority":"Média","acceptance_criteria":["Registra data e valor","Atualiza o saldo"]}
+    HTTP 201  ->  {"id":"47777df2-d14b-4e9d-bc03-08c034086fb0","project_id":"8bf55797-75a7-42de-9f8d-aabcde023456","title":"Registrar pagamento","description":null,"priority":"Média","acceptance_criteria":["Registra data e valor","Atualiza o saldo"],"status":"A fazer","created_at":"2026-10-21T12:49:19.720667-03:00","updated_at":"2026-10-21T12:49:19.720667-03:00"}
+    tela: mensagem de sucesso exibida só após o HTTP 201 acima
+
+=== 3. Recarregar a página (AC07): a história volta da API
+
+[4] GET /api/v1/projects/8bf55797-75a7-42de-9f8d-aabcde023456
+    HTTP 200  ->  {"id":"8bf55797-75a7-42de-9f8d-aabcde023456","name":"Projeto A (integração)","description":null,"created_at":"2026-10-21T12:49:18.396546-03:00","updated_at":"2026-10-21T12:49:18.396546-03:00"}
+
+[5] GET /api/v1/projects/8bf55797-75a7-42de-9f8d-aabcde023456/stories
+    HTTP 200  ->  [{"id":"47777df2-d14b-4e9d-bc03-08c034086fb0","project_id":"8bf55797-75a7-42de-9f8d-aabcde023456","title":"Registrar pagamento","description":null,"priority":"Média","acceptance_criteria":["Registra data e valor","Atualiza o saldo"],"status":"A fazer","created_at":"2026-10-21T12:49:19.720667-03:00","updated_at":"2026-10-21T12:49:19.720667-03:00"}]
+    tela: Registrar pagamento | Prioridade: | Média | Status: | A fazer | CRITÉRIOS DE ACEITAÇÃO | Registra data e valor | Atualiza o saldo | Criada em 21 de out. de 2026
+
+=== 4. Abrir projeto B (AC08): backlog de B não contém a história de A
+
+[6] GET /api/v1/projects/14962366-8fa2-422d-a7af-5197d551c1af
+    HTTP 200  ->  {"id":"14962366-8fa2-422d-a7af-5197d551c1af","name":"Projeto B (integração)","description":null,"created_at":"2026-10-21T12:49:18.420541-03:00","updated_at":"2026-10-21T12:49:18.420541-03:00"}
+
+[7] GET /api/v1/projects/14962366-8fa2-422d-a7af-5197d551c1af/stories
+    HTTP 200  ->  []
+
+=== 5. Falha de comunicação provocada no navegador (POST abortado) no projeto B (AC09)
+    tela: alerta = "Não foi possível salvar a história. Não foi possível se comunicar com o servidor. Verifique sua conexão e tente novamente."
+    tela: mensagem de sucesso presente? false  | cartões na lista: 0
+
+=== 6. Conferência direta na API depois do teste
+GET /projects/A/stories -> HTTP 200, 1 história(s): "Registrar pagamento" [Média, A fazer] criterios=["Registra data e valor","Atualiza o saldo"]
+GET /projects/B/stories -> HTTP 200, 0 história(s)
+POST em projeto inexistente (AC05) -> HTTP 404

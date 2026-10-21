@@ -1,0 +1,394 @@
+##### Evidências da Fase 3 (US-02 backend) — API real, PostgreSQL 16.15 local, 2026-10-21T15:18:43Z
+
+##### 0. Migrações e projetos preservados (banco de desenvolvimento)
+
+### projeto criado antes do ciclo de migração
+$ POST /api/v1/projects {"name":"Projeto da Fase 1","description":"Deve sobreviver à migração 0003"}
+HTTP 201
+{
+    "id": "17a9cb55-111b-402f-979a-76aae919dd20",
+    "name": "Projeto da Fase 1",
+    "description": "Deve sobreviver à migração 0003",
+    "created_at": "2026-10-21T12:18:44.948605-03:00",
+    "updated_at": "2026-10-21T12:18:44.948605-03:00"
+}
+
+$ alembic downgrade 0002 (remove só stories)
+INFO  [alembic.runtime.migration] Running downgrade 0003 -> 0002, cria a tabela stories (US-02)
+projetos após o downgrade: 1  | tabela stories existe: f
+$ alembic upgrade head
+INFO  [alembic.runtime.migration] Running upgrade 0002 -> 0003, cria a tabela stories (US-02)
+projetos após o upgrade: 1  | alembic current: 0003 (head) | check: No new upgrade operations detected.
+
+##### 1. POST /api/v1/projects/{id}/stories
+
+### Segundo projeto (para isolamento)
+$ POST /api/v1/projects {"name":"Outro projeto"}
+HTTP 201
+{
+    "id": "43d20abc-4149-4e4e-be35-161c942e6675",
+    "name": "Outro projeto",
+    "description": null,
+    "created_at": "2026-10-21T12:18:48.162315-03:00",
+    "updated_at": "2026-10-21T12:18:48.162315-03:00"
+}
+
+### 1.1 criar história válida (AC01)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"  Cadastrar história de usuário  ","description":"Como gestor, quero registrar histórias.","priority":"Alta","acceptance_criteria":["Salva título e prioridade","  Aparece no backlog  "]}
+HTTP 201
+{
+    "id": "cb54fba4-058b-4fee-86b8-e6a55c41985e",
+    "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+    "title": "Cadastrar história de usuário",
+    "description": "Como gestor, quero registrar histórias.",
+    "priority": "Alta",
+    "acceptance_criteria": [
+        "Salva título e prioridade",
+        "Aparece no backlog"
+    ],
+    "status": "A fazer",
+    "created_at": "2026-10-21T12:18:48.240682-03:00",
+    "updated_at": "2026-10-21T12:18:48.240682-03:00"
+}
+
+### 1.2 mesma título repetido, outro id (AC06)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"Cadastrar história de usuário","priority":"Média","acceptance_criteria":["Outro critério"]}
+HTTP 201
+{
+    "id": "9e4c8856-1b10-4dda-b8d2-88bacdaaa17a",
+    "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+    "title": "Cadastrar história de usuário",
+    "description": null,
+    "priority": "Média",
+    "acceptance_criteria": [
+        "Outro critério"
+    ],
+    "status": "A fazer",
+    "created_at": "2026-10-21T12:18:48.325698-03:00",
+    "updated_at": "2026-10-21T12:18:48.325698-03:00"
+}
+
+### 1.3 história no outro projeto
+$ POST /api/v1/projects/43d20abc-4149-4e4e-be35-161c942e6675/stories {"title":"História do outro projeto","priority":"Baixa","acceptance_criteria":["x"]}
+HTTP 201
+{
+    "id": "09ed8182-40fa-41f0-9ed2-4c4da030950a",
+    "project_id": "43d20abc-4149-4e4e-be35-161c942e6675",
+    "title": "História do outro projeto",
+    "description": null,
+    "priority": "Baixa",
+    "acceptance_criteria": [
+        "x"
+    ],
+    "status": "A fazer",
+    "created_at": "2026-10-21T12:18:48.414059-03:00",
+    "updated_at": "2026-10-21T12:18:48.414059-03:00"
+}
+
+##### 2. GET /api/v1/projects/{id}/stories
+
+### 2.1 backlog do projeto 1 (só as 2 histórias dele, mais recente primeiro)
+$ GET /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories 
+HTTP 200
+[
+    {
+        "id": "9e4c8856-1b10-4dda-b8d2-88bacdaaa17a",
+        "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+        "title": "Cadastrar história de usuário",
+        "description": null,
+        "priority": "Média",
+        "acceptance_criteria": [
+            "Outro critério"
+        ],
+        "status": "A fazer",
+        "created_at": "2026-10-21T12:18:48.325698-03:00",
+        "updated_at": "2026-10-21T12:18:48.325698-03:00"
+    },
+    {
+        "id": "cb54fba4-058b-4fee-86b8-e6a55c41985e",
+        "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+        "title": "Cadastrar história de usuário",
+        "description": "Como gestor, quero registrar histórias.",
+        "priority": "Alta",
+        "acceptance_criteria": [
+            "Salva título e prioridade",
+            "Aparece no backlog"
+        ],
+        "status": "A fazer",
+        "created_at": "2026-10-21T12:18:48.240682-03:00",
+        "updated_at": "2026-10-21T12:18:48.240682-03:00"
+    }
+]
+
+### 2.2 backlog do projeto 2 (isolamento, AC08)
+$ GET /api/v1/projects/43d20abc-4149-4e4e-be35-161c942e6675/stories 
+HTTP 200
+[
+    {
+        "id": "09ed8182-40fa-41f0-9ed2-4c4da030950a",
+        "project_id": "43d20abc-4149-4e4e-be35-161c942e6675",
+        "title": "História do outro projeto",
+        "description": null,
+        "priority": "Baixa",
+        "acceptance_criteria": [
+            "x"
+        ],
+        "status": "A fazer",
+        "created_at": "2026-10-21T12:18:48.414059-03:00",
+        "updated_at": "2026-10-21T12:18:48.414059-03:00"
+    }
+]
+
+##### 3. Erros
+
+### 3.1 projeto inexistente no POST (AC05)
+$ POST /api/v1/projects/00000000-0000-4000-8000-000000000000/stories {"title":"x","priority":"Alta","acceptance_criteria":["a"]}
+HTTP 404
+{
+    "error": {
+        "code": "not_found",
+        "message": "Recurso não encontrado."
+    }
+}
+
+### 3.2 projeto inexistente no GET
+$ GET /api/v1/projects/00000000-0000-4000-8000-000000000000/stories 
+HTTP 404
+{
+    "error": {
+        "code": "not_found",
+        "message": "Recurso não encontrado."
+    }
+}
+
+### 3.3 título vazio (AC02)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"   ","priority":"Alta","acceptance_criteria":["a"]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "title",
+                "code": "blank",
+                "message": "O título não pode ficar vazio."
+            }
+        ]
+    }
+}
+
+### 3.4 título com 151 caracteres
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt","priority":"Alta","acceptance_criteria":["a"]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "title",
+                "code": "too_long",
+                "message": "O título deve ter no máximo 150 caracteres."
+            }
+        ]
+    }
+}
+
+### 3.5 descrição com 2001 caracteres
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"x","description":"ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","priority":"Alta","acceptance_criteria":["a"]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "description",
+                "code": "too_long",
+                "message": "A descrição deve ter no máximo 2000 caracteres."
+            }
+        ]
+    }
+}
+
+### 3.6 prioridade inválida (AC04)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"x","priority":"Urgente","acceptance_criteria":["a"]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "priority",
+                "code": "invalid_priority",
+                "message": "A prioridade deve ser Alta, Média ou Baixa."
+            }
+        ]
+    }
+}
+
+### 3.7 sem critérios (AC03)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"x","priority":"Alta","acceptance_criteria":[]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "acceptance_criteria",
+                "code": "criteria_required",
+                "message": "Informe ao menos um critério de aceitação."
+            }
+        ]
+    }
+}
+
+### 3.8 critério só com espaços (AC03)
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"x","priority":"Alta","acceptance_criteria":["ok","   "]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "acceptance_criteria",
+                "code": "blank",
+                "message": "O critério de aceitação 2 não pode ficar vazio."
+            }
+        ]
+    }
+}
+
+### 3.9 vários erros de uma vez
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"","priority":"x","acceptance_criteria":[]}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "title",
+                "code": "blank",
+                "message": "O título não pode ficar vazio."
+            },
+            {
+                "field": "priority",
+                "code": "invalid_priority",
+                "message": "A prioridade deve ser Alta, Média ou Baixa."
+            },
+            {
+                "field": "acceptance_criteria",
+                "code": "criteria_required",
+                "message": "Informe ao menos um critério de aceitação."
+            }
+        ]
+    }
+}
+
+### 3.10 status enviado pelo cliente
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"x","priority":"Alta","acceptance_criteria":["a"],"status":"Concluída"}
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "status",
+                "code": "extra_forbidden",
+                "message": "O campo status não é permitido."
+            }
+        ]
+    }
+}
+
+### 3.11 identificador de projeto malformado
+$ GET /api/v1/projects/abc/stories 
+HTTP 422
+{
+    "error": {
+        "code": "validation_error",
+        "message": "Dados inválidos.",
+        "fields": [
+            {
+                "field": "project_id",
+                "code": "uuid_parsing",
+                "message": "O identificador informado é inválido."
+            }
+        ]
+    }
+}
+
+##### 4. Banco de dados (consulta direta)
+                  id                  |      projeto      |             title             | priority | status  |                 acceptance_criteria                 | tipo  
+--------------------------------------+-------------------+-------------------------------+----------+---------+-----------------------------------------------------+-------
+ 09ed8182-40fa-41f0-9ed2-4c4da030950a | Outro projeto     | História do outro projeto     | Baixa    | A fazer | ["x"]                                               | array
+ 9e4c8856-1b10-4dda-b8d2-88bacdaaa17a | Projeto da Fase 1 | Cadastrar história de usuário | Média    | A fazer | ["Outro critério"]                                  | array
+ cb54fba4-058b-4fee-86b8-e6a55c41985e | Projeto da Fase 1 | Cadastrar história de usuário | Alta     | A fazer | ["Salva título e prioridade", "Aparece no backlog"] | array
+(3 rows)
+total de histórias gravadas: 3 (esperado 3: as requisições inválidas e 404 não gravaram nada)
+
+##### 5. Persistência após reiniciar o servidor
+
+### 5.1 backlog do projeto 1 após reinício
+$ GET /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories 
+HTTP 200
+[
+    {
+        "id": "9e4c8856-1b10-4dda-b8d2-88bacdaaa17a",
+        "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+        "title": "Cadastrar história de usuário",
+        "description": null,
+        "priority": "Média",
+        "acceptance_criteria": [
+            "Outro critério"
+        ],
+        "status": "A fazer",
+        "created_at": "2026-10-21T12:18:48.325698-03:00",
+        "updated_at": "2026-10-21T12:18:48.325698-03:00"
+    },
+    {
+        "id": "cb54fba4-058b-4fee-86b8-e6a55c41985e",
+        "project_id": "17a9cb55-111b-402f-979a-76aae919dd20",
+        "title": "Cadastrar história de usuário",
+        "description": "Como gestor, quero registrar histórias.",
+        "priority": "Alta",
+        "acceptance_criteria": [
+            "Salva título e prioridade",
+            "Aparece no backlog"
+        ],
+        "status": "A fazer",
+        "created_at": "2026-10-21T12:18:48.240682-03:00",
+        "updated_at": "2026-10-21T12:18:48.240682-03:00"
+    }
+]
+
+##### 6. Falha real de banco (PostgreSQL parado)
+
+### 6.1 POST com o banco parado
+$ POST /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories {"title":"Não pode gravar","priority":"Alta","acceptance_criteria":["a"]}
+HTTP 500
+{
+    "error": {
+        "code": "internal_error",
+        "message": "Erro interno do servidor."
+    }
+}
+
+### 6.2 GET com o banco parado
+$ GET /api/v1/projects/17a9cb55-111b-402f-979a-76aae919dd20/stories 
+HTTP 500
+{
+    "error": {
+        "code": "internal_error",
+        "message": "Erro interno do servidor."
+    }
+}
+
+##### 7. Após religar o banco: nada foi gravado pela falha
+total de histórias: 3 (continua 3)
