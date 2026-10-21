@@ -1,0 +1,11 @@
+# Segredos e ambientes locais
+.env
+.env.*
+!.env.example
+__pycache__/
+.venv/
+node_modules/
+dist/
+coverage/
+.pytest_cache/
+.DS_Store
