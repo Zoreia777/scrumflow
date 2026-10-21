@@ -2,11 +2,11 @@
 
 Plataforma web de gestão ágil. Nesta etapa (Sprint 01) o produto permite **cadastrar projetos** e **cadastrar e listar histórias de usuário** de cada projeto.
 
-> **Estado do projeto:** em revisão. A Sprint 01 foi implementada e testada pelo executor, mas **não foi homologada**: as Issues #1 e #2 não estão marcadas como concluídas, não houve validação com Docker nem do frontend no Windows, e nada foi publicado no GitHub. Veja [Limitações conhecidas](#limitações-conhecidas) e `docs/sprints/sprint-01-pendencias-homologacao.md`.
+> Estado do projeto: em revisão. A Sprint 01 foi implementada e testada pelo executor, mas **não foi homologada**: as Issues #1 e #2 não estão marcadas como concluídas, não houve validação com Docker nem do frontend no Windows, e o código foi publicado no GitHub, mas ainda aguarda revisão final e homologação. Veja [Limitações conhecidas](#limitações-conhecidas) e `docs/sprints/sprint-01-pendencias-homologacao.md`.
 
 ## Funcionalidades
 
-**US-01 — Projetos**
+US-01 — Projetos**
 - Criar, listar, ver detalhes e editar projetos (nome de 1 a 100 caracteres; descrição opcional de até 1000).
 - Mensagens de erro claras, sem falso sucesso quando a API falha.
 
@@ -151,4 +151,4 @@ Esses números **não** foram reproduzidos em outros ambientes. Cobertura de có
 
 ## Licença
 
-Não definida. Escolher uma licença antes de tornar o repositório público.
+Licença ainda não definida. O repositório é público, mas isso não significa que seu código esteja liberado para reutilização por terceiros
