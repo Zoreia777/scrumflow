@@ -1,0 +1,25 @@
+# PostgreSQL de desenvolvimento e testes (backend e frontend rodam localmente).
+# Bancos: POSTGRES_DB (desenvolvimento) e POSTGRES_TEST_DB (criado pelos testes).
+name: scrumflow
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scrumflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env (copie de .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-scrumflow}
+    ports:
+      # Exposto apenas em 127.0.0.1: o banco não fica acessível pela rede.
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - scrumflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  scrumflow_pgdata:
