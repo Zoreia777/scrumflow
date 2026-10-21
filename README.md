@@ -6,7 +6,7 @@ Plataforma web de gestão ágil. Nesta etapa (Sprint 01) o produto permite **cad
 
 ## Funcionalidades
 
-US-01 — Projetos**
+**US-01 — Projetos**
 - Criar, listar, ver detalhes e editar projetos (nome de 1 a 100 caracteres; descrição opcional de até 1000).
 - Mensagens de erro claras, sem falso sucesso quando a API falha.
 
